@@ -192,7 +192,7 @@ class RichEmbed extends Discord.RichEmbed {
 	constructor() {
 		super();
 		this.setTimestamp();
-		this.setFooter("Wagyourtail 2019. [GitHub]()");
+		this.setFooter("Wagyourtail 2019. bit.ly/QualityBot");
 	}
 }
 Discord.RichEmbed = RichEmbed;
