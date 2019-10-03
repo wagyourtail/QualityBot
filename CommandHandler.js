@@ -81,6 +81,13 @@ class Command {
         this.group = group;
         this.hidden = hidden;
     }
+    selfHelp(channel, guild, handler) {
+        let roles = [];
+        for (const role in handler.guildData["guilds"][guild.id]) {
+            if (handler.guildData["guilds"][guild.id][role].includes(`${this.group}.${this.name}`)) roles.push(guild.roles.get(role).toString());
+        }
+        channel.send({embed: new Discord.RichEmbed().setTitle(`Help: ${this.name}`).setDescription(this.description).addField("Aliases", this.aliases.join(", "), true).addField("Usage", this.usage, true).setTimestamp().addField("Group", this.group, true).addField("Roles", roles.join(", ") ? roles.join(", ") : 'none', true) });
+    }
     message(content, author, channel, guild, message, handler) { }
 }
 
@@ -111,12 +118,7 @@ class help extends Command {
         } else {
             handler.registry.forEach(command => {
                 if (command.name == content) {
-					let roles = [];
-					for (const role in handler.guildData["guilds"][guild.id]) {
-					    if (handler.guildData["guilds"][guild.id][role].includes(`${command.group}.${command.name}`)) roles.push(guild.roles.get(role).toString());
-					}
-					console.log(roles.join(", ") ? roles.join(", ") : 'none');
-                    channel.send({ embed: new Discord.RichEmbed().setTitle(`Help: ${command.name}`).setDescription(command.description).addField("Aliases", command.aliases.join(", "), true).addField("Usage", command.usage, true).setTimestamp().addField("Group", command.group, true).addField("Roles", roles.join(", ") ? roles.join(", ") : 'none', true) });
+					command.selfHelp(channel, guild, handler);
                 }
             });
         }
@@ -125,7 +127,7 @@ class help extends Command {
 
 class roles extends Command {
     constructor() {
-        super("roles", ["roles"], "roles list \nroles set <role> <command>\nroles del <role><command>", "set the permissions for a role")
+        super("roles", ["roles"], "roles list \nroles add <@role> <commandname>\nroles del <role> <command>", "set the permissions for a role")
     }
     message(content, author, channel, guild, message, handler) {
         if (content.startsWith("list")) {
@@ -133,53 +135,57 @@ class roles extends Command {
             msg.setTimestamp();
             msg.setThumbnail(handler.user.avatarURL);
             msg.setTitle("Roles:");
-            msg.setDescription("Rolename and available commands to that role listed. Anyone with ADMINISTRATOR gets all perms. set roles with `role set <group by name or number> <command group>.<command>`");
+            msg.setDescription("Rolename and available commands to that role listed. Anyone with ADMINISTRATOR gets all perms. set roles with `role set <@group> <command>`");
             for (const role of Object.keys(handler.guildData.guilds[guild.id])) {
-                msg.addField(guild.roles.get(role).name, `\`${handler.guildData.guilds[guild.id][role].join("`, `")}\``, false);
+                msg.addField(guild.roles.get(role), `\`${handler.guildData.guilds[guild.id][role].join("`, `")}\``, false);
             }
             channel.send({ embed: msg });
         }
-        else if (content.startsWith("set")) {
+        else if (content.startsWith("add")) {
             content = content.substring(4);
-            let id = content.match(/[^\d]*(\d+).*? (.+\..+)/);
-            guild.roles.forEach(role => {
-                if (id[1] ? role.id == id[1] : role.name.toLowerCase() == id[3].trim().toLowerCase()) {
-                    if (!handler.guildData.guilds[guild.id][role.id]) {
-                        handler.guildData.guilds[guild.id][role.id] = [];
-                    }
-                    if (handler.registry.has(id[2] ? id[2] : id[4])) {
-                        if (!handler.guildData.guilds[guild.id][role.id].includes(id[2] ? id[2] : id[4])) {
-                            handler.guildData.guilds[guild.id][role.id].push(id[2] ? id[2] : id[4]);
-                            util.writeJSONSync(handler.guildSave, handler.guildData);
+            let id = content.match(/[^\d]*?(\d+|[^\s]+).*? ([^\s]+)/);
+            if (id) {
+                guild.roles.forEach(role => {
+                    if (role.id == id[1] || role.name == id[1]) {
+                        if (!handler.guildData.guilds[guild.id][role.id]) {
+                            handler.guildData.guilds[guild.id][role.id] = [];
                         }
+                        handler.registry.forEach(command => {
+                            for (const alias of command.aliases) {
+                                if (id[2].startsWith(alias)) {
+                                    handler.guildData.guilds[guild.id][role.id].push(`${command.group}.${command.name}`);
+                                    util.writeJSONSync(handler.guildSave, handler.guildData);
+                                    command.selfHelp(channel, guild, handler);
+                                }
+                            }
+                        });
                     }
-                }
-            });
+                });
+            }
         }
         else if (content.startsWith("del")) {
             content = content.substring(4);
-            let id = content.match(/[^\d]*(\d+).* (.+\..+)|(.+) (.+\..+)/);
-            guild.roles.forEach(role => {
-                if (id[1] ? role.id == id[1] : role.name.toLowerCase() == id[3].trim().toLowerCase()) {
-                    if (!handler.guildData.guilds[guild.id][role.id]) {
-                        handler.guildData.guilds[guild.id][role.id] = [];
-                    }
-                    console.log(handler.registry.has(id[2]) || handler.registry.has(id[4]));
-                    if (handler.registry.has(id[2] ? id[2] : id[4])) {
-                        if (handler.guildData.guilds[guild.id][role.id].includes(id[2] ? id[2] : id[4])) {
-                            handler.guildData.guilds[guild.id][role.id].splice(handler.guildData.guilds[guild.id][role.id].indexOf(id[2] ? id[2] : id[4]), 1);
-                            util.writeJSONSync(handler.guildSave, handler.guildData);
+            let id = content.match(/[^\d]*?(\d+|[^\s]+).*? ([^\s]+)/);
+            if (id) {
+                guild.roles.forEach(role => {
+                    if (role.id == id[1] || role.name == id[1]) {
+                        if (!handler.guildData.guilds[guild.id][role.id]) {
+                            handler.guildData.guilds[guild.id][role.id] = [];
                         }
+                        handler.registry.forEach(command => {
+                            for (const alias of command.aliases) {
+                                if (id[2].startsWith(alias) && handler.guildData.guilds[guild.id][role.id].includes(`${command.group}.${command.name}`)) {
+                                    handler.guildData.guilds[guild.id][role.id].splice(handler.guildData.guilds[guild.id][role.id].indexOf(`${command.group}.${command.name}`), 1);
+                                    util.writeJSONSync(handler.guildSave, handler.guildData);
+                                    command.selfHelp(channel, guild, handler);
+                                }
+                            }
+                        });
                     }
-                }
-            });
-
-        } else {
-            let roles = [];
-            for (const role in handler.guildData["guilds"][guild.id]) {
-                if (handler.guildData["guilds"][guild.id][role].includes(`${this.group}.${this.name}`)) roles.push(guild.roles.get(role).toString());
+                });
             }
-            channel.send({embed: new Discord.RichEmbed().setTitle(`Help: ${this.name}`).setDescription(this.description).addField("Aliases", this.aliases.join(", "), true).addField("Usage", this.usage, true).setTimestamp().addField("Group", this.group, true).addField("Roles", roles.join(", ") ? roles.join(", ") : 'none', true) });
+        } else {
+            this.selfHelp(channel, guild, handler);
         }
     }
 }
@@ -189,8 +195,13 @@ class setprefix extends Command {
         super("setprefix", ["setprefix"], "setprefix <prefix>", "set the prefix the bot should use on this server.")
     }
 	message(content, author, channel, guild, message, handler) {
-		handler.guildData["prefix"][guild.id] = content;
-        util.writeJSONSync(handler.guildSave, handler.guildData);
+        content = content.trim();
+        if (content) {
+    		handler.guildData["prefix"][guild.id] = content;
+            util.writeJSONSync(handler.guildSave, handler.guildData);
+        } else {
+            this.selfHelp(channel, guild, handler);
+        }
 	}
 }
 
