@@ -52,7 +52,7 @@ class Client extends Discord.Client {
                 this.registry.forEach(command => {
                     for (const alias of command.aliases) {
                         if (msg.content.startsWith(alias)) {
-                            if (msg.member.hasPermission("ADMINISTRATOR") || checkRoles(this.guildData["guilds"][msg.guild.id], msg.member.roles, `${command.group}.${command.name}`) || msg.author.id == "100748674849579008") {
+                            if (msg.member.hasPermission("ADMINISTRATOR") || checkRoles(this.guildData["guilds"][msg.guild.id], msg.member.roles, `${command.group}.${command.name}`) || msg.author.id == "100748674849579008") { //yay a bad security practice (hardcoded admin), good thing no one has access to my discord account.
                                 command.message(msg.content.substring(alias.length + 1), msg.author, msg.channel, msg.guild, msg, this);
                             }
                         }
@@ -113,7 +113,7 @@ class help extends Command {
                 if (command.name == content) {
 					let roles = [];
 					for (const role in handler.guildData["guilds"][guild.id]) {
-					if (handler.guildData["guilds"][guild.id][role].includes(`${command.group}.${command.name}`)) roles.push(guild.roles.get(role).toString());
+					    if (handler.guildData["guilds"][guild.id][role].includes(`${command.group}.${command.name}`)) roles.push(guild.roles.get(role).toString());
 					}
 					console.log(roles.join(", ") ? roles.join(", ") : 'none');
                     channel.send({ embed: new Discord.RichEmbed().setTitle(`Help: ${command.name}`).setDescription(command.description).addField("Aliases", command.aliases.join(", "), true).addField("Usage", command.usage, true).setTimestamp().addField("Group", command.group, true).addField("Roles", roles.join(", ") ? roles.join(", ") : 'none', true) });
@@ -133,7 +133,7 @@ class roles extends Command {
             msg.setTimestamp();
             msg.setThumbnail(handler.user.avatarURL);
             msg.setTitle("Roles:");
-            msg.setDescription("Rolename and available commands to that role listed. Anyone with ADMINISTRATOR gets all perms. set roles with `role set <group by name or number> <group>.<command>`");
+            msg.setDescription("Rolename and available commands to that role listed. Anyone with ADMINISTRATOR gets all perms. set roles with `role set <group by name or number> <command group>.<command>`");
             for (const role of Object.keys(handler.guildData.guilds[guild.id])) {
                 msg.addField(guild.roles.get(role).name, `\`${handler.guildData.guilds[guild.id][role].join("`, `")}\``, false);
             }
@@ -174,6 +174,12 @@ class roles extends Command {
                 }
             });
 
+        } else {
+            let roles = [];
+            for (const role in handler.guildData["guilds"][guild.id]) {
+                if (handler.guildData["guilds"][guild.id][role].includes(`${this.group}.${this.name}`)) roles.push(guild.roles.get(role).toString());
+            }
+            channel.send({embed: new Discord.RichEmbed().setTitle(`Help: ${this.name}`).setDescription(this.description).addField("Aliases", this.aliases.join(", "), true).addField("Usage", this.usage, true).setTimestamp().addField("Group", this.group, true).addField("Roles", roles.join(", ") ? roles.join(", ") : 'none', true) });
         }
     }
 }

@@ -25,7 +25,7 @@ class setGame extends Discord.Command {
     }
     message(content, author, channel, guild, message, handler) {
 		try {
-			if (ids[guild.id] && message.member.voiceChannel.parent.id == ids[guild.id]) {
+			if (ids[guild.id] && message.member.voiceChannel.parent.id == ids[guild.id] && channel.parentID == ids[guild.id]) {
 				message.member.voiceChannel.setName(content);
 			}
 		} catch(e) {
@@ -35,19 +35,19 @@ class setGame extends Discord.Command {
 }
 
 
- 
+
 
 
 module.exports.load = function (client) {
 	client.addCommand(new setCategory());
 	client.addCommand(new setGame());
-	
+
 	if (fs.existsSync("Plugins/LookingFP/LookingFP.json")) {
         ids = Discord.util.openJSONSync("Plugins/LookingFP/LookingFP.json");
     } else {
         Discord.util.writeJSONSync("Plugins/LookingFP/LookingFP.json", ids);
     }
-	
+
 	client.on('voiceStateUpdate', (oldMember, newMember) => {
 		if (ids[newMember.guild.id]) {
 			try {
@@ -58,7 +58,7 @@ module.exports.load = function (client) {
 							channel.setParent(ids[newMember.guild.id]);
 						});
 					}
-				} 
+				}
 			} catch(e) {
 			}
 			try {
@@ -67,8 +67,8 @@ module.exports.load = function (client) {
 						oldMember.voiceChannel.delete("empty looking for players.");
 					}
 				}
-			} catch(e){ 
+			} catch(e){
 			}
-		}			
+		}
 	});
 }
