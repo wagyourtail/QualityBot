@@ -54,9 +54,7 @@ module.exports.load = function (client) {
 				if (newMember.voiceChannel.parent.id == ids[newMember.guild.id]) {
 					if (newMember.voiceChannel.members.size == 1 && (!oldMember.voiceChannel || oldMember.voiceChannel.id != newMember.voiceChannel.id)) {
 						if (newMember.presence.game) newMember.voiceChannel.setName(newMember.presence.game.name);
-						newMember.guild.createChannel("Looking For Players", "voice").then((channel) => {
-							channel.setParent(ids[newMember.guild.id]);
-						});
+						newMember.guild.createChannel("Looking For Players", { type: 'voice', parent: ids[newMember.guild.id] });
 					}
 				}
 			} catch(e) {
