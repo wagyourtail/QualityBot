@@ -1,2 +1,2 @@
-/client.json
-client.json
+node_modules/*
+*.json
