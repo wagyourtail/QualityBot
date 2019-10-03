@@ -1,6 +1,6 @@
 {
   "name": "quality-bot",
-  "version": "1",
+  "version": "1.0.0",
   "description": "QualityBot By WagYourTail",
   "main": "app.js",
   "author": {
@@ -8,13 +8,8 @@
   },
   "dependencies": {
     "aki-api": "^3.0.0",
-    "akinator-api": "^1.0.1",
     "discord.js": "^11.4.2",
-    "node-opus": "^0.2.7",
     "request": "^2.85.0",
-    "weather-js": "^2.0.0",
-    "youtube-playlist-info": "^1.1.2",
-    "youtube-search": "^1.1.0",
-    "ytdl-core": "^0.20.2"
+    "weather-js": "^2.0.0"
   }
 }
