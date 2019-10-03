@@ -100,7 +100,6 @@ class help extends Command {
             let sort = {};
             let msg = new Discord.RichEmbed();
             msg.setTitle("Help:");
-            msg.setThumbnail(handler.user.avatarURL);
             msg.setTimestamp();
             msg.setDescription("List of Commands")
             msg.setThumbnail(handler.user.avatarURL);
