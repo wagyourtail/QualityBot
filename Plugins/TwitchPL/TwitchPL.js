@@ -8,7 +8,7 @@ class setRole extends Discord.Command {
         super("streamrole", ["streamrole"], "streamrole <@role>", "set role for streaming role", "Twitch Streaming");
     }
     message(content, author, channel, guild, message, handler) {
-        console.log('debug1');
+        //console.log('debug1');
         let id = content.match(/[^\d]*(\d+).*/);
 		if (id && id[1]) {
 				ids[guild.id] = id[1];
@@ -23,12 +23,22 @@ class setRole extends Discord.Command {
 
 class listRoles extends Discord.Command {
     constructor() {
-        super("listroles", ["listroles"], "listroles", "list all server roles by id", "Twitch Streaming");
+        super("listroles", ["listroles"], "listroles", "list all server roles by id", "default");
     }
     message(content, author, channel, guild, message, handler) {
+        let roles = [];
         guild.roles.forEach(role => {
-			channel.send(`${role.name}: ${role.id}`);
+            if (roles.join("\n").length >= 2048) {
+                channel.send(new Discord.RichEmbed().setDescription(roles.slice(0,roles.length-1).join("\n")));
+                roles = [roles[roles.length-1]];
+            }
+            roles.push(`${role}: ${role.id}`);
 		});
+        if (roles.join("\n").length >= 2048) {
+            channel.send(new Discord.RichEmbed().setDescription(roles.slice(0,roles.length-1).join("\n")));
+            roles = [roles[roles.length-1]];
+        }
+        channel.send(new Discord.RichEmbed().setDescription(roles.join("\n")));
     }
 }
 
@@ -42,8 +52,8 @@ module.exports.load = function (client) {
     } else {
         Discord.util.writeJSONSync("Plugins/TwitchPL/TwitchPL.json", ids);
     }
-    
-    
+
+
     client.on('presenceUpdate', (oldMember, newMember) => {
         if (ids[newMember.guild.id]) {
             if (newMember.presence.game && newMember.presence.game.streaming) {
